@@ -1,9 +1,66 @@
-import { Button } from "./components/ui/button"
+import { useState } from 'react';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
-export default function App() {
+export default function BB84Simulator() {
+  const [inputText, setInputText] = useState('');
+
+  // Convert text to binary
+  const textToBinary = (text: string) => {
+    return text
+      .split('')
+      .map(char => char.charCodeAt(0).toString(2).padStart(8, '0'))
+      .join('');
+  };
+
+  const binaryString = inputText ? textToBinary(inputText) : '';
+
   return (
-    <div>
-      <Button>Click Me!</Button>
+    <div className="min-h-screen w-full">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Title */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            BB84 Quantum Key Distribution Simulator
+          </h1>
+          <p className="text-gray-600">
+            Interactive simulation demonstrating quantum key distribution and eavesdropping detection
+          </p>
+        </div>
+
+        <Card className="shadow-none">
+          <CardContent className="flex flex-col gap-5">
+            <CardTitle className="text-xl">Enter Text</CardTitle>
+
+            <Input
+              id="text-input"
+              type="text"
+              placeholder="Type your message here..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+            />
+            
+            {/* Binary Display */}
+            {inputText && (
+              <>
+                <div className="flex flex-wrap gap-1">
+                  {binaryString.split('').map((bit, index) => (
+                    <div
+                      key={index}
+                      className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 rounded-md font-mono font-bold text-lg"
+                    >
+                      {bit}
+                    </div>
+                  ))}
+                </div>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">Total bits:</span> {binaryString.length}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
-  )
+  );
 }
