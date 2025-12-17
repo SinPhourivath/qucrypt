@@ -9,7 +9,7 @@ export default function BB84Simulator() {
   const textToBinary = (text: string) => {
     return text
       .split('')
-      .map(char => char.charCodeAt(0).toString(2).padStart(8, '0'))
+      .map((char) => char.charCodeAt(0).toString(2).padStart(8, '0'))
       .join('');
   };
 
@@ -24,7 +24,8 @@ export default function BB84Simulator() {
             BB84 Quantum Key Distribution Simulator
           </h1>
           <p className="text-gray-600">
-            Interactive simulation demonstrating quantum key distribution and eavesdropping detection
+            Interactive simulation demonstrating quantum key distribution and
+            eavesdropping detection
           </p>
         </div>
 
@@ -39,7 +40,7 @@ export default function BB84Simulator() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
             />
-            
+
             {/* Binary Display */}
             {inputText && (
               <>
@@ -54,7 +55,8 @@ export default function BB84Simulator() {
                   ))}
                 </div>
                 <div className="text-sm text-gray-600">
-                  <span className="font-semibold">Total bits:</span> {binaryString.length}
+                  <span className="font-semibold">Total bits:</span>{' '}
+                  {binaryString.length}
                 </div>
               </>
             )}
