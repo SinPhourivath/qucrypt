@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { Plus, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 export default function BB84Simulator() {
   const [inputText, setInputText] = useState('');
+  const [bases, setBases] = useState<string[]>([]);
 
   // Convert text to binary
   const textToBinary = (text: string) => {
@@ -14,6 +16,24 @@ export default function BB84Simulator() {
   };
 
   const binaryString = inputText ? textToBinary(inputText) : '';
+
+  // Initialize bases array when binary string changes
+  useEffect(() => {
+    if (binaryString) {
+      setBases(new Array(binaryString.length).fill('+'));
+    } else {
+      setBases([]);
+    }
+  }, [binaryString]);
+
+  // Toggle basis for a specific bit
+  const toggleBasis = (index: number) => {
+    setBases((prev) => {
+      const newBases = [...prev];
+      newBases[index] = newBases[index] === '+' ? '✕' : '+';
+      return newBases;
+    });
+  };
 
   return (
     <div className="min-h-screen w-full">
@@ -29,7 +49,7 @@ export default function BB84Simulator() {
           </p>
         </div>
 
-        <Card className="shadow-none">
+        <Card className="shadow-none mb-8">
           <CardContent className="flex flex-col gap-5">
             <CardTitle className="text-xl">Enter Text</CardTitle>
 
@@ -47,7 +67,7 @@ export default function BB84Simulator() {
                 <div className="flex flex-wrap gap-1">
                   {binaryString.split('').map((bit, index) => (
                     <div
-                      key={index}
+                      key={`${index}-${bit}`}
                       className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 rounded-md font-mono font-bold text-lg"
                     >
                       {bit}
@@ -62,6 +82,30 @@ export default function BB84Simulator() {
             )}
           </CardContent>
         </Card>
+
+        {inputText && (
+          <Card className="shadow-none">
+            <CardContent className="flex flex-col gap-5">
+              <CardTitle className="text-xl">Choose Basis</CardTitle>
+              <div className="flex flex-wrap gap-1">
+                {binaryString.split('').map((bit, index) => (
+                  <button
+                    type="button"
+                    key={`${index}-${bit}`}
+                    onClick={() => toggleBasis(index)}
+                    className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 rounded-md hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer"
+                  >
+                    {bases[index] === '+' ? (
+                      <Plus className="w-6 h-6" />
+                    ) : (
+                      <X className="w-6 h-6" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
