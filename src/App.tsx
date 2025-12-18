@@ -29,12 +29,16 @@ export default function BB84Simulator() {
 
   // Initialize bases array when binary string changes
   useEffect(() => {
-    if (binaryString) {
-      setBases(new Array(binaryString.length).fill('+'));
-    } else {
-      setBases([]);
-    }
-  }, [binaryString]);
+  if (binaryString) {
+    setBases(new Array(binaryString.length).fill('+'));
+    setBobBases(new Array(binaryString.length).fill('+'));
+  } else {
+    setBases([]);
+    setBobBases([]);
+  }
+  setTransmitted(false);
+  setAliceBasisVisible(true);
+}, [binaryString]);
 
   // Toggle basis for a specific bit
   const toggleBasis = (index: number) => {
