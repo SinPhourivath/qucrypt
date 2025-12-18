@@ -14,6 +14,7 @@ export default function BB84Simulator() {
   const [inputText, setInputText] = useState('');
   const [bases, setBases] = useState<string[]>([]);
   const [transmitted, setTransmitted] = useState(false);
+  const [aliceBasisVisible, setAliceBasisVisible] = useState(true);
   const [bobBases, setBobBases] = useState<string[]>([]);
 
   // Convert text to binary
@@ -118,24 +119,38 @@ export default function BB84Simulator() {
                 randomize them. Once ready, click "Transmit" to send the qubits
                 to Bob through the quantum channel.
               </CardDescription>
-              <div className="flex flex-wrap gap-1">
-                {binaryString.split('').map((bit, index) => (
-                  <Button
-                    key={`${index}-${bit}`}
-                    onClick={() => toggleBasis(index)}
-                    variant="outline"
-                    size="icon"
-                    className="w-10 h-10 bg-white shadow-none cursor-pointer"
-                  >
-                    {bases[index] === '+' ? (
-                      <Plus className="w-6 h-6" />
-                    ) : (
-                      <X className="w-6 h-6" />
-                    )}
-                  </Button>
-                ))}
-              </div>
+              {aliceBasisVisible ? (
+                <div className="flex flex-wrap gap-1">
+                  {binaryString.split('').map((bit, index) => (
+                    <Button
+                      key={`${index}-${bit}`}
+                      onClick={() => toggleBasis(index)}
+                      variant="outline"
+                      size="icon"
+                      className="w-10 h-10 bg-white shadow-none cursor-pointer"
+                    >
+                      {bases[index] === '+' ? (
+                        <Plus className="w-6 h-6" />
+                      ) : (
+                        <X className="w-6 h-6" />
+                      )}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-2 text-muted-foreground">
+                  <p>Alice's bases are hidden</p>
+                </div>
+              )}
               <div className="flex gap-2 justify-end">
+                {transmitted && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setAliceBasisVisible(!aliceBasisVisible)}
+                  >
+                    {aliceBasisVisible ? 'Hide Bases' : 'Show Bases'}
+                  </Button>
+                )}
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -145,13 +160,16 @@ export default function BB84Simulator() {
                         .map(() => (Math.random() > 0.5 ? '+' : '✕'))
                     );
                   }}
+                  disabled={transmitted}
                 >
                   Randomize Bases
                 </Button>
                 <Button
                   onClick={() => {
                     setTransmitted(true);
+                    setAliceBasisVisible(false);
                   }}
+                  disabled={transmitted}
                 >
                   Transmit
                 </Button>
