@@ -16,6 +16,8 @@ export default function BB84Simulator() {
   const [transmitted, setTransmitted] = useState(false);
   const [aliceBasisVisible, setAliceBasisVisible] = useState(true);
   const [bobBases, setBobBases] = useState<string[]>([]);
+  const [measured, setMeasured] = useState(false);
+  const [bobMeasurements, setBobMeasurements] = useState<string[]>([]);
 
   // Convert text to binary
   const textToBinary = (text: string) => {
@@ -38,6 +40,7 @@ export default function BB84Simulator() {
     }
     setTransmitted(false);
     setAliceBasisVisible(true);
+    setMeasured(false);
   }, [binaryString]);
 
   // Toggle basis for a specific bit
@@ -72,6 +75,7 @@ export default function BB84Simulator() {
           </p>
         </div>
 
+        {/* Alice's Message Card */}
         <Card className="shadow-none mb-8">
           <CardContent className="flex flex-col gap-5">
             <CardTitle className="text-xl">Alice's Message</CardTitle>
@@ -112,6 +116,7 @@ export default function BB84Simulator() {
           </CardContent>
         </Card>
 
+        {/* Alice's Basis Card */}
         {inputText && (
           <Card className="shadow-none">
             <CardContent className="flex flex-col gap-5">
@@ -181,6 +186,8 @@ export default function BB84Simulator() {
             </CardContent>
           </Card>
         )}
+
+        {/* Bob's Basis Card */}
         {transmitted && (
           <Card className="shadow-none mt-8">
             <CardContent className="flex flex-col gap-5">
@@ -230,11 +237,49 @@ export default function BB84Simulator() {
                 </Button>
                 <Button
                   onClick={() => {
-                    console.log('Bob measuring with bases:', bobBases);
+                    const measurements = binaryString
+                      .split('')
+                      .map((bit, index) => {
+                        if (bases[index] === bobBases[index]) {
+                          return bit;
+                        } else {
+                          return Math.random() > 0.5 ? '1' : '0';
+                        }
+                      });
+                    setBobMeasurements(measurements);
+                    setMeasured(true);
                   }}
                 >
                   Measure
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Bob's Measurement Results Card */}
+        {measured && (
+          <Card className="shadow-none mt-8">
+            <CardContent className="flex flex-col gap-5">
+              <CardTitle className="text-xl">
+                Bob's Measurement Results
+              </CardTitle>
+              <CardDescription>
+                Now you (Bob) has measured the qubits using the chosen bases.
+                Here are the results you got. Some bits might be correct, and
+                some might be wrong depending on whether the bases matched
+                Alice's.
+              </CardDescription>
+              <div className="flex flex-wrap gap-1">
+                {bobMeasurements.map((bit, index) => (
+                  <Badge
+                    key={`${index}-${bit}`}
+                    variant="outline"
+                    className="w-10 h-10 flex text-lg rounded-md"
+                  >
+                    {bit}
+                  </Badge>
+                ))}
               </div>
             </CardContent>
           </Card>
