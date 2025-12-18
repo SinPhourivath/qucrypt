@@ -18,6 +18,7 @@ export default function BB84Simulator() {
   const [bobBases, setBobBases] = useState<string[]>([]);
   const [measured, setMeasured] = useState(false);
   const [bobMeasurements, setBobMeasurements] = useState<string[]>([]);
+  const [compared, setCompared] = useState(false);
 
   // Convert text to binary
   const textToBinary = (text: string) => {
@@ -41,6 +42,7 @@ export default function BB84Simulator() {
     setTransmitted(false);
     setAliceBasisVisible(true);
     setMeasured(false);
+    setCompared(false);
   }, [binaryString]);
 
   // Toggle basis for a specific bit
@@ -281,6 +283,33 @@ export default function BB84Simulator() {
                   </Badge>
                 ))}
               </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="default"
+                  onClick={() => setCompared(true)}
+                >
+                  Continue
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Bases Comparison Card */}
+        {compared && (
+          <Card className="shadow-none mt-8">
+            <CardContent className="flex flex-col gap-5">
+              <CardTitle className="text-xl">
+                Bases Comparison
+              </CardTitle>
+              <CardDescription>
+                Now, how do we get the correct result you may ask? At this stage, Bob will publicly announce his bases, and alice will say which position is match.
+              </CardDescription>
+              <CardDescription>
+                The key points here are:
+                <p> - Bob reveals only his bases, not the measured bits</p>
+                <p> - He can share this in a classical channel</p>
+              </CardDescription>
             </CardContent>
           </Card>
         )}
