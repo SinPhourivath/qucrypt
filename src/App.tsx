@@ -1,7 +1,12 @@
 import { Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from './components/ui/button';
 
@@ -53,7 +58,7 @@ export default function BB84Simulator() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Title */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
             BB84 Quantum Key Distribution Simulator
           </h1>
           <p className="text-gray-600">
@@ -64,7 +69,12 @@ export default function BB84Simulator() {
 
         <Card className="shadow-none mb-8">
           <CardContent className="flex flex-col gap-5">
-            <CardTitle className="text-xl">Enter Text</CardTitle>
+            <CardTitle className="text-xl">Alice's Message</CardTitle>
+            <CardDescription>
+              Pretend that you are Alice and you want to send a secret message
+              to Bob. First, you write your message which will be converted into
+              bits (0s and 1s) for quantum operations.
+            </CardDescription>
 
             <Input
               id="text-input"
@@ -82,13 +92,13 @@ export default function BB84Simulator() {
                     <Badge
                       key={`${index}-${bit}`}
                       variant="outline"
-                      className="w-10 h-10 flex font-mono text-lg rounded-md cursor-"
+                      className="w-10 h-10 flex text-lg rounded-md cursor-"
                     >
                       {bit}
                     </Badge>
                   ))}
                 </div>
-                <div className="text-sm ">
+                <div className="text-sm">
                   <span className="font-semibold">Total bits:</span>{' '}
                   {binaryString.length}
                 </div>
@@ -100,7 +110,14 @@ export default function BB84Simulator() {
         {inputText && (
           <Card className="shadow-none">
             <CardContent className="flex flex-col gap-5">
-              <CardTitle className="text-xl">Choose Basis</CardTitle>
+              <CardTitle className="text-xl">Alice Choose Basis</CardTitle>
+              <CardDescription>
+                Now you (Alice) choose a random basses for each bit: +
+                (rectilinear) or x (diagonal). This is like choosing a secret
+                encoding for your message. You can select bases manually or
+                randomize them. Once ready, click "Transmit" to send the qubits
+                to Bob through the quantum channel.
+              </CardDescription>
               <div className="flex flex-wrap gap-1">
                 {binaryString.split('').map((bit, index) => (
                   <Button
@@ -146,6 +163,19 @@ export default function BB84Simulator() {
           <Card className="shadow-none mt-8">
             <CardContent className="flex flex-col gap-5">
               <CardTitle className="text-xl">Bob's Measurement Bases</CardTitle>
+              <CardDescription>
+                Bob receives your qubits but doesn't know which bases you used.
+                He must randomly choose his own measurement bases (+ or x) to
+                each qubit. When Bob's basis matches yours, he correctly
+                measures the bit. When bases don't match, he gets a random
+                result (50/50 chance).
+              </CardDescription>
+              <CardDescription>
+                But… we don't have anyone else to role-play as Bob. You can ask
+                a friend to do it, or… pretend you are Bob and try to measure
+                the qubits without knowing the bases you just chose. Click
+                "measure" when you are done :D
+              </CardDescription>
               <div className="flex flex-wrap gap-1">
                 {binaryString.split('').map((bit, index) => (
                   <Button
