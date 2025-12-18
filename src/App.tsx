@@ -1,7 +1,9 @@
 import { Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from './components/ui/button';
 
 export default function BB84Simulator() {
   const [inputText, setInputText] = useState('');
@@ -66,15 +68,16 @@ export default function BB84Simulator() {
               <>
                 <div className="flex flex-wrap gap-1">
                   {binaryString.split('').map((bit, index) => (
-                    <div
+                    <Badge
                       key={`${index}-${bit}`}
-                      className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 rounded-md font-mono font-bold text-lg"
+                      variant="outline"
+                      className="w-10 h-10 flex font-mono text-lg rounded-md cursor-"
                     >
                       {bit}
-                    </div>
+                    </Badge>
                   ))}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm ">
                   <span className="font-semibold">Total bits:</span>{' '}
                   {binaryString.length}
                 </div>
@@ -89,19 +92,41 @@ export default function BB84Simulator() {
               <CardTitle className="text-xl">Choose Basis</CardTitle>
               <div className="flex flex-wrap gap-1">
                 {binaryString.split('').map((bit, index) => (
-                  <button
-                    type="button"
+                  <Button
                     key={`${index}-${bit}`}
                     onClick={() => toggleBasis(index)}
-                    className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 rounded-md hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer"
+                    variant="outline"
+                    size="icon"
+                    className="w-10 h-10 bg-white shadow-none cursor-pointer"
                   >
                     {bases[index] === '+' ? (
                       <Plus className="w-6 h-6" />
                     ) : (
                       <X className="w-6 h-6" />
                     )}
-                  </button>
+                  </Button>
                 ))}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setBases(
+                      new Array(binaryString.length)
+                        .fill(null)
+                        .map(() => (Math.random() > 0.5 ? '+' : '✕'))
+                    );
+                  }}
+                >
+                  Randomize Bases
+                </Button>
+                <Button
+                  onClick={() => {
+                    console.log('Transmitting with bases:', bases);
+                  }}
+                >
+                  Transmit
+                </Button>
               </div>
             </CardContent>
           </Card>
