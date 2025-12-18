@@ -284,10 +284,7 @@ export default function BB84Simulator() {
                 ))}
               </div>
               <div className="flex gap-2 justify-end">
-                <Button
-                  variant="default"
-                  onClick={() => setCompared(true)}
-                >
+                <Button variant="default" onClick={() => setCompared(true)}>
                   Continue
                 </Button>
               </div>
@@ -299,17 +296,74 @@ export default function BB84Simulator() {
         {compared && (
           <Card className="shadow-none mt-8">
             <CardContent className="flex flex-col gap-5">
-              <CardTitle className="text-xl">
-                Bases Comparison
-              </CardTitle>
+              <CardTitle className="text-xl">Bases Comparison</CardTitle>
               <CardDescription>
-                Now, how do we get the correct result you may ask? At this stage, Bob will publicly announce his bases, and alice will say which position is match.
+                Now, how do we get the correct result you may ask? At this
+                stage, Bob will publicly announce his bases, and alice will say
+                which position is match.
               </CardDescription>
               <CardDescription>
                 The key points here are:
                 <p> - Bob reveals only his bases, not the measured bits</p>
                 <p> - He can share this in a classical channel</p>
               </CardDescription>
+              <div className="space-y-4">
+                {/* Alice's Bases */}
+                <div>
+                  <p className="text-sm font-medium mb-2">Alice's Bases:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {bases.map((basis, index) => (
+                      <Button
+                        key={`${index}-${bases}`}
+                        variant="outline"
+                        size="icon"
+                        className={`w-10 h-10 shadow-none bg-white hover:bg-transparent cursor-default ${
+                          bases[index] === bobBases[index] ? '' : 'opacity-30'
+                        }`}
+                      >
+                        {basis === '+' ? (
+                          <Plus className="w-6 h-6" />
+                        ) : (
+                          <X className="w-6 h-6" />
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bob's Bases */}
+                <div>
+                  <p className="text-sm font-medium mb-2">Bob's Bases:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {bobBases.map((basis, index) => (
+                      <Button
+                        key={`${index}-${bases}`}
+                        variant="outline"
+                        size="icon"
+                        className={`w-10 h-10 shadow-none bg-white hover:bg-transparent cursor-default ${
+                          bases[index] === bobBases[index] ? '' : 'opacity-30'
+                        }`}
+                      >
+                        {basis === '+' ? (
+                          <Plus className="w-6 h-6" />
+                        ) : (
+                          <X className="w-6 h-6" />
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Match indicator */}
+                <div className="text-sm">
+                  <span className="font-semibold">Matching bases:</span>{' '}
+                  {
+                    bases.filter((basis, index) => basis === bobBases[index])
+                      .length
+                  }{' '}
+                  out of {bases.length}
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
