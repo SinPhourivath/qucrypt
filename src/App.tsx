@@ -8,6 +8,8 @@ import { Button } from './components/ui/button';
 export default function BB84Simulator() {
   const [inputText, setInputText] = useState('');
   const [bases, setBases] = useState<string[]>([]);
+  const [transmitted, setTransmitted] = useState(false);
+  const [bobBases, setBobBases] = useState<string[]>([]);
 
   // Convert text to binary
   const textToBinary = (text: string) => {
@@ -31,6 +33,15 @@ export default function BB84Simulator() {
   // Toggle basis for a specific bit
   const toggleBasis = (index: number) => {
     setBases((prev) => {
+      const newBases = [...prev];
+      newBases[index] = newBases[index] === '+' ? '✕' : '+';
+      return newBases;
+    });
+  };
+
+  // Toggle Bob's basis
+  const toggleBobBasis = (index: number) => {
+    setBobBases((prev) => {
       const newBases = [...prev];
       newBases[index] = newBases[index] === '+' ? '✕' : '+';
       return newBases;
@@ -122,10 +133,55 @@ export default function BB84Simulator() {
                 </Button>
                 <Button
                   onClick={() => {
-                    console.log('Transmitting with bases:', bases);
+                    setTransmitted(true);
                   }}
                 >
                   Transmit
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {transmitted && (
+          <Card className="shadow-none mt-8">
+            <CardContent className="flex flex-col gap-5">
+              <CardTitle className="text-xl">Bob's Measurement Bases</CardTitle>
+              <div className="flex flex-wrap gap-1">
+                {binaryString.split('').map((bit, index) => (
+                  <Button
+                    key={`bob-${index}-${bit}`}
+                    onClick={() => toggleBobBasis(index)}
+                    variant="outline"
+                    size="icon"
+                    className="w-10 h-10 bg-white shadow-none cursor-pointer"
+                  >
+                    {bobBases[index] === '+' ? (
+                      <Plus className="w-6 h-6" />
+                    ) : (
+                      <X className="w-6 h-6" />
+                    )}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setBobBases(
+                      new Array(binaryString.length)
+                        .fill(null)
+                        .map(() => (Math.random() > 0.5 ? '+' : '✕'))
+                    );
+                  }}
+                >
+                  Randomize Bases
+                </Button>
+                <Button
+                  onClick={() => {
+                    console.log('Bob measuring with bases:', bobBases);
+                  }}
+                >
+                  Measure
                 </Button>
               </div>
             </CardContent>
