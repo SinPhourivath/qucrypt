@@ -94,7 +94,7 @@ export default function BB84Simulator() {
           {/* Alice's Message Card */}
           <Card className="shadow-none mb-8">
             <CardContent className="flex flex-col gap-5">
-              <CardTitle className="text-xl">Alice's Message</CardTitle>
+              <CardTitle className="text-xl">Alice's Secret Key</CardTitle>
               <CardDescription className="dark:text-gray-400">
                 Pretend that you are Alice and you want to send a secret message
                 to Bob. First, you write your message which will be converted
@@ -136,7 +136,9 @@ export default function BB84Simulator() {
           {inputText && (
             <Card className="shadow-none">
               <CardContent className="flex flex-col gap-5">
-                <CardTitle className="text-xl">Alice Choose Basis</CardTitle>
+                <CardTitle className="text-xl">
+                  Alice's Transmission Bases
+                </CardTitle>
                 <CardDescription>
                   Now you (Alice) choose a random basses for each bit: +
                   (rectilinear) or x (diagonal). This is like choosing a secret
@@ -325,25 +327,22 @@ export default function BB84Simulator() {
                 </CardDescription>
                 <div className="space-y-4">
                   {/* Bob's Bases */}
-                  <div>
-                    <p className="text-sm font-medium mb-2">Bob's Bases:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {binaryString.split('').map((bit, index) => (
-                        <Button
-                          key={`bob-${index}-${bit}`}
-                          onClick={() => toggleBobBasis(index)}
-                          variant="outline"
-                          size="icon"
-                          className="w-10 h-10 bg-white shadow-none cursor-pointer"
-                        >
-                          {bobBases[index] === '+' ? (
-                            <Plus className="w-6 h-6" />
-                          ) : (
-                            <X className="w-6 h-6" />
-                          )}
-                        </Button>
-                      ))}
-                    </div>
+                  <p className="text-sm font-medium mb-2">Bob's Bases:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {binaryString.split('').map((bit, index) => (
+                      <Button
+                        key={`bob-${index}-${bit}`}
+                        variant="outline"
+                        size="icon"
+                        className="w-10 h-10 bg-white shadow-none"
+                      >
+                        {bobBases[index] === '+' ? (
+                          <Plus className="w-6 h-6" />
+                        ) : (
+                          <X className="w-6 h-6" />
+                        )}
+                      </Button>
+                    ))}
                   </div>
 
                   <p className="text-sm font-medium mb-2">
@@ -357,14 +356,14 @@ export default function BB84Simulator() {
                   </p>
 
                   {/* Match indicator */}
-                  <div className="text-sm">
+                  <p className="text-sm">
                     <span className="font-semibold">Matching bases:</span>{' '}
                     {
                       bases.filter((basis, index) => basis === bobBases[index])
                         .length
                     }{' '}
                     out of {bases.length}
-                  </div>
+                  </p>
 
                   <div className="flex gap-2 justify-end">
                     <Button variant="default" onClick={() => setResults(true)}>
@@ -382,48 +381,60 @@ export default function BB84Simulator() {
               <CardContent className="flex flex-col gap-5">
                 <CardTitle className="text-xl">Result</CardTitle>
                 <div className="space-y-4">
-                  {/* Bob's Bases */}
-                  <div>
-                    <p className="text-sm font-medium mb-2">Bob's Bases:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {bobBases.map((basis, index) => (
-                        <Button
-                          key={`${index}-${bases}`}
-                          variant="outline"
-                          size="icon"
-                          className={`w-10 h-10 shadow-none bg-white hover:bg-transparent cursor-default ${bases[index] === bobBases[index] ? '' : 'opacity-30'
-                            }`}
-                        >
-                          {basis === '+' ? (
-                            <Plus className="w-6 h-6" />
-                          ) : (
-                            <X className="w-6 h-6" />
-                          )}
-                        </Button>
-                      ))}
-                    </div>
+                  {/* Bob's Correct Bases */}
+                  <p className="text-sm font-medium mb-2">
+                    Bob's Correct Bases:
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {bobBases.map((basis, index) => (
+                      <Button
+                        key={`${index}-${bases}`}
+                        variant="outline"
+                        size="icon"
+                        className={`w-10 h-10 shadow-none bg-white hover:bg-transparent cursor-default ${
+                          bases[index] === bobBases[index] ? '' : 'opacity-30'
+                        }`}
+                      >
+                        {basis === '+' ? (
+                          <Plus className="w-6 h-6" />
+                        ) : (
+                          <X className="w-6 h-6" />
+                        )}
+                      </Button>
+                    ))}
                   </div>
 
-                  {/* Alice's Bases */}
-                  <div>
-                    <p className="text-sm font-medium mb-2">Alice's Bases:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {bases.map((basis, index) => (
-                        <Button
-                          key={`${index}-${bases}`}
+                  {/* Bob's Measurement */}
+                  <p className="text-sm font-medium mb-2">Bob's Measurement:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {bobMeasurements.map((bit, index) => (
+                      <Badge
+                        key={`${index}-${bit}`}
+                        variant="outline"
+                        className={`w-10 h-10 flex text-lg rounded-md ${
+                          bases[index] === bobBases[index] ? '' : 'opacity-30'
+                        }`}
+                      >
+                        {bit}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  {/* Usable Key */}
+                  <p className="text-sm font-medium mb-2">Usable Key:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {bobMeasurements
+                      .map((bit, index) => ({ bit, index }))
+                      .filter(({ index }) => bases[index] === bobBases[index])
+                      .map(({ bit, index }) => (
+                        <Badge
+                          key={`${index}-${bit}`}
                           variant="outline"
-                          size="icon"
-                          className={`w-10 h-10 shadow-none bg-white hover:bg-transparent cursor-default ${bases[index] === bobBases[index] ? '' : 'opacity-30'
-                            }`}
+                          className="w-10 h-10 flex text-lg rounded-md"
                         >
-                          {basis === '+' ? (
-                            <Plus className="w-6 h-6" />
-                          ) : (
-                            <X className="w-6 h-6" />
-                          )}
-                        </Button>
+                          {bit}
+                        </Badge>
                       ))}
-                    </div>
                   </div>
                 </div>
               </CardContent>
