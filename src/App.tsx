@@ -19,6 +19,7 @@ export default function BB84Simulator() {
   const [measured, setMeasured] = useState(false);
   const [bobMeasurements, setBobMeasurements] = useState<string[]>([]);
   const [compared, setCompared] = useState(false);
+  const [results, setResults] = useState(false);
 
   // Convert text to binary
   const textToBinary = (text: string) => {
@@ -43,6 +44,7 @@ export default function BB84Simulator() {
     setAliceBasisVisible(true);
     setMeasured(false);
     setCompared(false);
+    setResults(false);
   }, [binaryString]);
 
   // Toggle basis for a specific bit
@@ -62,6 +64,10 @@ export default function BB84Simulator() {
       return newBases;
     });
   };
+
+  const matchingIndices = bases
+    .map((basis, index) => (basis === bobBases[index] ? index : null))
+    .filter((i): i is number => i !== null);
 
   return (
     <div className="min-h-screen w-full">
@@ -308,20 +314,19 @@ export default function BB84Simulator() {
                 <p> - He can share this in a classical channel</p>
               </CardDescription>
               <div className="space-y-4">
-                {/* Alice's Bases */}
+                {/* Bob's Bases */}
                 <div>
-                  <p className="text-sm font-medium mb-2">Alice's Bases:</p>
+                  <p className="text-sm font-medium mb-2">Bob's Bases:</p>
                   <div className="flex flex-wrap gap-1">
-                    {bases.map((basis, index) => (
+                    {binaryString.split('').map((bit, index) => (
                       <Button
-                        key={`${index}-${bases}`}
+                        key={`bob-${index}-${bit}`}
+                        onClick={() => toggleBobBasis(index)}
                         variant="outline"
                         size="icon"
-                        className={`w-10 h-10 shadow-none bg-white hover:bg-transparent cursor-default ${
-                          bases[index] === bobBases[index] ? '' : 'opacity-30'
-                        }`}
+                        className="w-10 h-10 bg-white shadow-none cursor-pointer"
                       >
-                        {basis === '+' ? (
+                        {bobBases[index] === '+' ? (
                           <Plus className="w-6 h-6" />
                         ) : (
                           <X className="w-6 h-6" />
@@ -331,6 +336,42 @@ export default function BB84Simulator() {
                   </div>
                 </div>
 
+                <p className="text-sm font-medium mb-2">
+                  Alice says the correct bases are index:{' '}
+                </p>
+
+                <p className="text-sm">
+                  {matchingIndices.length > 0
+                    ? matchingIndices.join(', ')
+                    : 'None'}
+                </p>
+
+                {/* Match indicator */}
+                <div className="text-sm">
+                  <span className="font-semibold">Matching bases:</span>{' '}
+                  {
+                    bases.filter((basis, index) => basis === bobBases[index])
+                      .length
+                  }{' '}
+                  out of {bases.length}
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button variant="default" onClick={() => setResults(true)}>
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Result Card */}
+        {results && (
+          <Card className="shadow-none mt-8">
+            <CardContent className="flex flex-col gap-5">
+              <CardTitle className="text-xl">Result</CardTitle>
+              <div className="space-y-4">
                 {/* Bob's Bases */}
                 <div>
                   <p className="text-sm font-medium mb-2">Bob's Bases:</p>
@@ -354,14 +395,27 @@ export default function BB84Simulator() {
                   </div>
                 </div>
 
-                {/* Match indicator */}
-                <div className="text-sm">
-                  <span className="font-semibold">Matching bases:</span>{' '}
-                  {
-                    bases.filter((basis, index) => basis === bobBases[index])
-                      .length
-                  }{' '}
-                  out of {bases.length}
+                {/* Alice's Bases */}
+                <div>
+                  <p className="text-sm font-medium mb-2">Alice's Bases:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {bases.map((basis, index) => (
+                      <Button
+                        key={`${index}-${bases}`}
+                        variant="outline"
+                        size="icon"
+                        className={`w-10 h-10 shadow-none bg-white hover:bg-transparent cursor-default ${
+                          bases[index] === bobBases[index] ? '' : 'opacity-30'
+                        }`}
+                      >
+                        {basis === '+' ? (
+                          <Plus className="w-6 h-6" />
+                        ) : (
+                          <X className="w-6 h-6" />
+                        )}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
