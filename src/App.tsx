@@ -95,7 +95,7 @@ export default function BB84Simulator() {
           <Card className="shadow-none mb-8">
             <CardContent className="flex flex-col gap-5">
               <CardTitle className="text-xl">Alice's Secret Key</CardTitle>
-              <CardDescription className="dark:text-gray-400">
+              <CardDescription>
                 Pretend that you are Alice and you want to send a secret message
                 to Bob. First, you write your message which will be converted
                 into bits (0s and 1s) for quantum operations.
@@ -380,6 +380,18 @@ export default function BB84Simulator() {
             <Card className="shadow-none mt-8">
               <CardContent className="flex flex-col gap-5">
                 <CardTitle className="text-xl">Result</CardTitle>
+                <CardDescription>
+                  After knowing the correct bases, Bob discards all bits
+                  measured with mismatched bases and keeps only the remaining
+                  bits as the shared secret key. This is called{' '}
+                  <span className="text-primary">Basis Sifting</span>.
+                </CardDescription>
+                <CardDescription>
+                  You may ask why we need to do this. Remember that the wrong
+                  bases measure qubits in random (50/50), there is no way of
+                  knowing if those bits are correct or not, so we must discard
+                  them.
+                </CardDescription>
                 <div className="space-y-4">
                   {/* Bob's Correct Bases */}
                   <p className="text-sm font-medium mb-2">
@@ -440,6 +452,13 @@ export default function BB84Simulator() {
               </CardContent>
             </Card>
           )}
+
+          {/* Additional Explanation */}
+          <div className="mt-8">
+            <div className="flex justify-between items-start">
+              <p>Notable confusing concepts:</p>
+            </div>
+          </div>
         </div>
       </div>
     </ThemeProvider>
