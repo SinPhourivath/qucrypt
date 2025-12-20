@@ -1,6 +1,4 @@
-import { Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -8,6 +6,8 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { BasisSelector } from './components/basis-selector';
+import { BinaryDisplay } from './components/binary-display';
 import { ModeToggle } from './components/mode-toggle';
 import { ThemeProvider } from './components/theme-provider';
 import { Button } from './components/ui/button';
@@ -131,17 +131,7 @@ export default function BB84Simulator() {
               {/* Binary Display */}
               {inputText && (
                 <>
-                  <div className="flex flex-wrap gap-1">
-                    {binaryString.split('').map((bit, index) => (
-                      <Badge
-                        key={`${index}-${bit}`}
-                        variant="outline"
-                        className="w-10 h-10 flex text-lg rounded-md cursor-"
-                      >
-                        {bit}
-                      </Badge>
-                    ))}
-                  </div>
+                  <BinaryDisplay bits={binaryString.split('')} />
                   <div className="text-sm">
                     <span className="font-semibold">Total bits:</span>{' '}
                     {binaryString.length}
@@ -166,23 +156,7 @@ export default function BB84Simulator() {
                   qubits to Bob through the quantum channel.
                 </CardDescription>
                 {aliceBasisVisible ? (
-                  <div className="flex flex-wrap gap-1">
-                    {binaryString.split('').map((bit, index) => (
-                      <Button
-                        key={`${index}-${bit}`}
-                        onClick={() => toggleBasis(index)}
-                        variant="outline"
-                        size="icon"
-                        className="w-10 h-10 bg-white shadow-none cursor-pointer"
-                      >
-                        {bases[index] === '+' ? (
-                          <Plus className="w-6 h-6" />
-                        ) : (
-                          <X className="w-6 h-6" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
+                  <BasisSelector bases={bases} onToggle={toggleBasis} />
                 ) : (
                   <div className="flex items-center justify-center py-2 text-muted-foreground">
                     <p>Alice's bases are hidden</p>
@@ -229,17 +203,19 @@ export default function BB84Simulator() {
                       setEveEnabled(checked as boolean);
 
                       // Reset Eve's state
+                      setEveBases(
+                        checked ? new Array(binaryString.length).fill('+') : []
+                      );
                       setEveIntercepted(false);
                       setEveSentQubits(false);
-                      setEveBases([]);
                       setEveMeasurements([]);
 
                       // Reset Bob's state when toggling Eve
                       setBobBases(new Array(binaryString.length).fill('+'));
                       setMeasured(false);
-                      setBobMeasurements([]);
                       setCompared(false);
                       setResults(false);
+                      setBobMeasurements([]);
                     }}
                   />
                   <Label
@@ -273,23 +249,7 @@ export default function BB84Simulator() {
                 </CardDescription>
 
                 <p className="text-sm font-medium">Eve's Measurement Bases:</p>
-                <div className="flex flex-wrap gap-1">
-                  {binaryString.split('').map((bit, index) => (
-                    <Button
-                      key={`eve-${index}-${bit}`}
-                      onClick={() => toggleEveBasis(index)}
-                      variant="outline"
-                      size="icon"
-                      className="w-10 h-10 bg-white shadow-none cursor-pointer"
-                    >
-                      {eveBases[index] === '+' ? (
-                        <Plus className="w-6 h-6" />
-                      ) : (
-                        <X className="w-6 h-6" />
-                      )}
-                    </Button>
-                  ))}
-                </div>
+                <BasisSelector bases={eveBases} onToggle={toggleEveBasis} />
 
                 <div className="flex gap-2 justify-end">
                   <Button
@@ -350,15 +310,7 @@ export default function BB84Simulator() {
                 </CardDescription>
 
                 <div className="flex flex-wrap gap-1">
-                  {eveMeasurements.map((bit, index) => (
-                    <Badge
-                      key={`eve-result-${index}-${bit}`}
-                      variant="outline"
-                      className="w-10 h-10 flex text-lg rounded-md"
-                    >
-                      {bit}
-                    </Badge>
-                  ))}
+                  <BinaryDisplay bits={eveMeasurements} />
                 </div>
 
                 <div className="flex gap-2 justify-end">
@@ -400,23 +352,7 @@ export default function BB84Simulator() {
                   measure the qubits without knowing the bases you just chose.
                   Click "measure" when you are done :D
                 </CardDescription>
-                <div className="flex flex-wrap gap-1">
-                  {binaryString.split('').map((bit, index) => (
-                    <Button
-                      key={`bob-${index}-${bit}`}
-                      onClick={() => toggleBobBasis(index)}
-                      variant="outline"
-                      size="icon"
-                      className="w-10 h-10 bg-white shadow-none cursor-pointer"
-                    >
-                      {bobBases[index] === '+' ? (
-                        <Plus className="w-6 h-6" />
-                      ) : (
-                        <X className="w-6 h-6" />
-                      )}
-                    </Button>
-                  ))}
-                </div>
+                <BasisSelector bases={bobBases} onToggle={toggleBobBasis} />
                 <div className="flex gap-2 justify-end">
                   <Button
                     variant="secondary"
@@ -474,15 +410,7 @@ export default function BB84Simulator() {
                   Alice's.
                 </CardDescription>
                 <div className="flex flex-wrap gap-1">
-                  {bobMeasurements.map((bit, index) => (
-                    <Badge
-                      key={`${index}-${bit}`}
-                      variant="outline"
-                      className="w-10 h-10 flex text-lg rounded-md"
-                    >
-                      {bit}
-                    </Badge>
-                  ))}
+                  <BinaryDisplay bits={bobMeasurements} />
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button variant="default" onClick={() => setCompared(true)}>
@@ -511,22 +439,7 @@ export default function BB84Simulator() {
                 <div className="space-y-4">
                   {/* Bob's Bases */}
                   <p className="text-sm font-medium mb-2">Bob's Bases:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {binaryString.split('').map((bit, index) => (
-                      <Button
-                        key={`bob-${index}-${bit}`}
-                        variant="outline"
-                        size="icon"
-                        className="w-10 h-10 bg-white shadow-none"
-                      >
-                        {bobBases[index] === '+' ? (
-                          <Plus className="w-6 h-6" />
-                        ) : (
-                          <X className="w-6 h-6" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
+                  <BasisSelector bases={bobBases} onToggle={() => {}} />
 
                   <p className="text-sm font-medium mb-2">
                     Alice says the correct bases are index:{' '}
@@ -580,57 +493,26 @@ export default function BB84Simulator() {
                   <p className="text-sm font-medium mb-2">
                     Bob's Correct Bases:
                   </p>
-                  <div className="flex flex-wrap gap-1">
-                    {bobBases.map((basis, index) => (
-                      <Button
-                        key={`${index}-${bases}`}
-                        variant="outline"
-                        size="icon"
-                        className={`w-10 h-10 shadow-none bg-white hover:bg-transparent cursor-default ${
-                          bases[index] === bobBases[index] ? '' : 'opacity-30'
-                        }`}
-                      >
-                        {basis === '+' ? (
-                          <Plus className="w-6 h-6" />
-                        ) : (
-                          <X className="w-6 h-6" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
+                  <BasisSelector
+                    bases={bobBases}
+                    onToggle={() => {}}
+                    opacity={(index) => bases[index] === bobBases[index]}
+                  />
 
                   {/* Bob's Measurement */}
                   <p className="text-sm font-medium mb-2">Bob's Measurement:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {bobMeasurements.map((bit, index) => (
-                      <Badge
-                        key={`${index}-${bit}`}
-                        variant="outline"
-                        className={`w-10 h-10 flex text-lg rounded-md ${
-                          bases[index] === bobBases[index] ? '' : 'opacity-30'
-                        }`}
-                      >
-                        {bit}
-                      </Badge>
-                    ))}
-                  </div>
+                  <BinaryDisplay
+                    bits={bobMeasurements}
+                    opacity={(index) => bases[index] === bobBases[index]}
+                  />
 
                   {/* Usable Key */}
                   <p className="text-sm font-medium mb-2">Usable Key:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {bobMeasurements
-                      .map((bit, index) => ({ bit, index }))
-                      .filter(({ index }) => bases[index] === bobBases[index])
-                      .map(({ bit, index }) => (
-                        <Badge
-                          key={`${index}-${bit}`}
-                          variant="outline"
-                          className="w-10 h-10 flex text-lg rounded-md"
-                        >
-                          {bit}
-                        </Badge>
-                      ))}
-                  </div>
+                  <BinaryDisplay
+                    bits={bobMeasurements.filter(
+                      (_, index) => bases[index] === bobBases[index]
+                    )}
+                  />
                 </div>
               </CardContent>
             </Card>
