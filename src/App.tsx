@@ -31,6 +31,23 @@ export default function BB84Simulator() {
   const [compared, setCompared] = useState(false);
   const [results, setResults] = useState(false);
   const [errorEstimation, setErrorEstimation] = useState(false);
+  const [errorCorrection, setErrorCorrection] = useState(false);
+  const [cascadeRounds, setCascadeRounds] = useState<
+    Array<{
+      round: number;
+      blockSize: number;
+      blocksChecked: number;
+      errorsFound: number;
+      correctedKey: string[];
+      blocks: Array<{
+        indices: number[];
+        aliceParity: number;
+        bobParity: number;
+        hasError: boolean;
+        errorIndex?: number;
+      }>;
+    }>
+  >([]);
 
   // Convert text to binary
   const textToBinary = (text: string) => {
@@ -118,6 +135,126 @@ export default function BB84Simulator() {
   ).length;
   const errorRate = sampleSize > 0 ? (errors / sampleSize) * 100 : 0;
   const hasEavesdropping = errorRate > 11;
+
+  const runCascadeProtocol = () => {
+    const rounds: Array<{
+      round: number;
+      blockSize: number;
+      blocksChecked: number;
+      errorsFound: number;
+      correctedKey: string[];
+      blocks: Array<{
+        indices: number[];
+        aliceParity: number;
+        bobParity: number;
+        hasError: boolean;
+        errorIndex?: number;
+      }>;
+    }> = [];
+
+    let currentBobKey = [...usableKey];
+    const aliceKey = [...aliceUsableKey];
+    const keyLength = currentBobKey.length;
+
+    // Cascade protocol: 4 rounds with increasing block sizes
+    const blockSizes = [
+      Math.ceil((0.73 / (errorRate || 1)) * 100), // adaptive to error rate
+      Math.ceil(keyLength / 8),
+      Math.ceil(keyLength / 4),
+      Math.ceil(keyLength / 2)
+    ];
+
+    for (let round = 0; round < 4; round++) {
+      let blockSize = Math.max(4, Math.min(blockSizes[round], keyLength));
+      let errorsFound = 0;
+      let blocksChecked = 0;
+      const blockInfo: Array<{
+        indices: number[];
+        aliceParity: number;
+        bobParity: number;
+        hasError: boolean;
+        errorIndex?: number;
+      }> = [];
+
+      // Shuffle indices for rounds after the first
+      let indices = Array.from({ length: keyLength }, (_, i) => i);
+      if (round > 0) {
+        indices = indices.sort(() => Math.random() - 0.5);
+      }
+
+      // Process blocks
+      for (let start = 0; start < keyLength; start += blockSize) {
+        const end = Math.min(start + blockSize, keyLength);
+        const blockIndices = indices.slice(start, end);
+
+        // Calculate parities
+        const aliceParity =
+          blockIndices.reduce((sum, idx) => sum + parseInt(aliceKey[idx]), 0) %
+          2;
+        const bobParity =
+          blockIndices.reduce(
+            (sum, idx) => sum + parseInt(currentBobKey[idx]),
+            0
+          ) % 2;
+
+        blocksChecked++;
+        let errorIndex: number | undefined;
+
+        // If parity mismatch, use binary search to find error
+        if (aliceParity !== bobParity) {
+          let left = 0;
+          let right = blockIndices.length - 1;
+
+          while (left < right) {
+            const mid = Math.floor((left + right) / 2);
+            const leftIndices = blockIndices.slice(left, mid + 1);
+
+            const aliceLeftParity =
+              leftIndices.reduce(
+                (sum, idx) => sum + parseInt(aliceKey[idx]),
+                0
+              ) % 2;
+            const bobLeftParity =
+              leftIndices.reduce(
+                (sum, idx) => sum + parseInt(currentBobKey[idx]),
+                0
+              ) % 2;
+
+            if (aliceLeftParity !== bobLeftParity) {
+              right = mid;
+            } else {
+              left = mid + 1;
+            }
+          }
+
+          // Flip the bit at the error position
+          errorIndex = blockIndices[left];
+          currentBobKey[errorIndex] =
+            currentBobKey[errorIndex] === '1' ? '0' : '1';
+          errorsFound++;
+        }
+
+        blockInfo.push({
+          indices: blockIndices,
+          aliceParity,
+          bobParity,
+          hasError: aliceParity !== bobParity,
+          errorIndex
+        });
+      }
+
+      rounds.push({
+        round: round + 1,
+        blockSize,
+        blocksChecked,
+        errorsFound,
+        correctedKey: [...currentBobKey],
+        blocks: blockInfo
+      });
+    }
+
+    setCascadeRounds(rounds);
+  };
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
@@ -664,27 +801,170 @@ export default function BB84Simulator() {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg mt-4">
-                      <p className="text-sm text-green-800 dark:text-green-200 font-semibold">
-                        Channel Secure
-                      </p>
-                      <div className="pt-4">
-                        <p className="text-sm">Errors detected: {errors}</p>
-                        <p className="text-sm">
-                          Error rate:{' '}
-                          <span
-                            className={
-                              hasEavesdropping
-                                ? 'text-red-600 dark:text-red-400 font-bold'
-                                : 'text-green-600 dark:text-green-400 font-bold'
-                            }
-                          >
-                            {errorRate.toFixed(2)}%
-                          </span>
+                    <>
+                      <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg mt-4">
+                        <p className="text-sm text-green-800 dark:text-green-200 font-semibold">
+                          Channel Secure
+                        </p>
+                        <div className="pt-4">
+                          <p className="text-sm">Errors detected: {errors}</p>
+                          <p className="text-sm">
+                            Error rate:{' '}
+                            <span
+                              className={
+                                hasEavesdropping
+                                  ? 'text-red-600 dark:text-red-400 font-bold'
+                                  : 'text-green-600 dark:text-green-400 font-bold'
+                              }
+                            >
+                              {errorRate.toFixed(2)}%
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end mt-4">
+                        <Button
+                          variant="default"
+                          onClick={() => {
+                            setErrorCorrection(true);
+                            // Run Cascade protocol
+                            runCascadeProtocol();
+                          }}
+                        >
+                          Continue to Error Correction
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Error Correction Card */}
+          {errorCorrection && (
+            <Card className="shadow-none mt-8">
+              <CardContent className="flex flex-col gap-5">
+                <CardTitle className="text-xl">
+                  Error Correction - Cascade Protocol
+                </CardTitle>
+                <CardDescription>
+                  The Cascade protocol uses parity checks and binary search to
+                  locate and correct errors in the shared key. It works in
+                  multiple rounds with different block sizes and shuffled
+                  positions to catch all errors.
+                </CardDescription>
+
+                <div className="space-y-6">
+                  {cascadeRounds.map((round, roundIdx) => (
+                    <div
+                      key={roundIdx}
+                      className="border rounded-lg p-4 space-y-3"
+                    >
+                      <p className="font-semibold">Round {round.round}</p>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <p>
+                          <span className="text-muted-foreground">
+                            Block size:
+                          </span>{' '}
+                          {round.blockSize} bits
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">Blocks:</span>{' '}
+                          {round.blocksChecked}
+                        </p>
+                        <p>
+                          <span className="text-muted-foreground">
+                            Errors found:
+                          </span>{' '}
+                          {round.errorsFound}
                         </p>
                       </div>
+
+                      <div className="space-y-3 mt-4">
+                        {round.blocks.map((block, blockIdx) => {
+                          const bobKey =
+                            roundIdx === 0
+                              ? usableKey
+                              : cascadeRounds[roundIdx - 1].correctedKey;
+                          const blockBits = block.indices.map(
+                            (idx) => bobKey[idx]
+                          );
+
+                          return (
+                            <div
+                              key={blockIdx}
+                              className="p-3 rounded border bg-muted/30"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs font-medium">
+                                  Block {blockIdx + 1}
+                                </p>
+                                <div className="flex gap-4 text-xs">
+                                  <span>Alice: {block.aliceParity}</span>
+                                  <span>Bob: {block.bobParity}</span>
+                                  {block.hasError ? 'Mismatch' : 'Match'}
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {blockBits.map((bit, bitIdx) => (
+                                  <span
+                                    key={bitIdx}
+                                    className={`inline-flex items-center justify-center w-6 h-6 text-xs font-mono rounded border ${
+                                      block.errorIndex === block.indices[bitIdx]
+                                        ? 'bg-primary text-primary-foreground font-bold border-primary'
+                                        : 'bg-background'
+                                    }`}
+                                  >
+                                    {bit}
+                                  </span>
+                                ))}
+                              </div>
+                              {block.hasError &&
+                                block.errorIndex !== undefined && (
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    Error corrected at position{' '}
+                                    {block.errorIndex}
+                                  </p>
+                                )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
+                  ))}
+
+                  <div className="space-y-3 mt-6">
+                    <p className="text-sm font-medium">Final Result:</p>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Alice's Key:
+                      </p>
+                      <BinaryDisplay bits={aliceUsableKey} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Bob's Corrected Key:
+                      </p>
+                      <BinaryDisplay
+                        bits={
+                          cascadeRounds[cascadeRounds.length - 1].correctedKey
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg bg-muted/50">
+                    <p className="text-sm font-semibold">
+                      Error Correction Complete
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      The Cascade protocol has completed {cascadeRounds.length}{' '}
+                      rounds of error correction. Alice and Bob now share an
+                      identical secret key that can be used for secure
+                      communication.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
