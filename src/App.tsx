@@ -19,6 +19,7 @@ export default function BB84Simulator() {
   const [bases, setBases] = useState<string[]>([]);
   const [transmitted, setTransmitted] = useState(false);
   const [eveEnabled, setEveEnabled] = useState(false);
+  const [noiseEnabled, setNoiseEnabled] = useState(false);
   const [eveSentQubits, setEveSentQubits] = useState(false);
   const [eveIntercepted, setEveIntercepted] = useState(false);
   const [eveBases, setEveBases] = useState<string[]>([]);
@@ -58,6 +59,7 @@ export default function BB84Simulator() {
     setMeasured(false);
     setCompared(false);
     setResults(false);
+    setErrorEstimation(false);
   }, [binaryString]);
 
   // Toggle basis for a specific bit
@@ -223,6 +225,35 @@ export default function BB84Simulator() {
                 </div>
 
                 <div className="flex items-center gap-2 pt-4 border-t">
+                  <Checkbox
+                    id="noise-toggle"
+                    checked={noiseEnabled}
+                    onCheckedChange={(checked) => {
+                      setNoiseEnabled(checked as boolean);
+
+                      // Reset Bob's state when toggling noise
+                      setBobBases(new Array(binaryString.length).fill('+'));
+                      setMeasured(false);
+                      setCompared(false);
+                      setResults(false);
+                      setBobMeasurements([]);
+                      setErrorEstimation(false);
+                    }}
+                  />
+                  <Label
+                    htmlFor="noise-toggle"
+                    className="text-sm cursor-pointer"
+                  >
+                    Enable Channel Noise
+                  </Label>
+                </div>
+                <CardDescription>
+                  Channel noise simulates natural errors in the quantum channel
+                  due to photon loss, detector inefficiency, or environmental
+                  interference. This will introduce a small error rate (~5%)
+                </CardDescription>
+
+                <div className="flex items-center gap-2">
                   <Checkbox
                     id="eve-toggle"
                     checked={eveEnabled}
@@ -406,11 +437,19 @@ export default function BB84Simulator() {
                             ? eveBases[index]
                             : bases[index];
 
+                          let measuredBit;
                           if (sourceBasis === bobBases[index]) {
-                            return sourceData;
+                            measuredBit = sourceData;
                           } else {
-                            return Math.random() > 0.5 ? '1' : '0';
+                            measuredBit = Math.random() > 0.5 ? '1' : '0';
                           }
+
+                          // Apply channel noise (~5% error rate)
+                          if (noiseEnabled && Math.random() < 0.05) {
+                            measuredBit = measuredBit === '1' ? '0' : '1';
+                          }
+
+                          return measuredBit;
                         });
                       setBobMeasurements(measurements);
                       setMeasured(true);
