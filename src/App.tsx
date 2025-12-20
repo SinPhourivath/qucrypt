@@ -221,30 +221,38 @@ export default function BB84Simulator() {
                   </Button>
                 </div>
 
-                {/* Eve Toggle */}
-                {transmitted && !eveIntercepted && (
-                  <>
-                    <div className="flex items-center gap-2 pt-4 border-t">
-                      <Checkbox
-                        id="eve-toggle"
-                        checked={eveEnabled}
-                        onCheckedChange={(checked) =>
-                          setEveEnabled(checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor="eve-toggle"
-                        className="text-sm cursor-pointer"
-                      >
-                        Enable Eavesdropper (Eve)
-                      </Label>
-                    </div>
-                    <CardDescription>
-                      Eve is a malicious actor in this communication. She trys
-                      to look into the qubits to extract their information.
-                    </CardDescription>
-                  </>
-                )}
+                <div className="flex items-center gap-2 pt-4 border-t">
+                  <Checkbox
+                    id="eve-toggle"
+                    checked={eveEnabled}
+                    onCheckedChange={(checked) => {
+                      setEveEnabled(checked as boolean);
+
+                      // Reset Eve's state
+                      setEveIntercepted(false);
+                      setEveSentQubits(false);
+                      setEveBases([]);
+                      setEveMeasurements([]);
+
+                      // Reset Bob's state when toggling Eve
+                      setBobBases(new Array(binaryString.length).fill('+'));
+                      setMeasured(false);
+                      setBobMeasurements([]);
+                      setCompared(false);
+                      setResults(false);
+                    }}
+                  />
+                  <Label
+                    htmlFor="eve-toggle"
+                    className="text-sm cursor-pointer"
+                  >
+                    Enable Eavesdropper (Eve)
+                  </Label>
+                </div>
+                <CardDescription>
+                  Eve is a malicious actor in this communication. She trys to
+                  look into the qubits to extract their information.
+                </CardDescription>
               </CardContent>
             </Card>
           )}
