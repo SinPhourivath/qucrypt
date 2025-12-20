@@ -29,6 +29,7 @@ export default function BB84Simulator() {
   const [bobMeasurements, setBobMeasurements] = useState<string[]>([]);
   const [compared, setCompared] = useState(false);
   const [results, setResults] = useState(false);
+  const [errorEstimation, setErrorEstimation] = useState(false);
 
   // Convert text to binary
   const textToBinary = (text: string) => {
@@ -89,6 +90,32 @@ export default function BB84Simulator() {
   const matchingIndices = bases
     .map((basis, index) => (basis === bobBases[index] ? index : null))
     .filter((i): i is number => i !== null);
+
+  const usableKey = bobMeasurements.filter(
+    (_, index) => bases[index] === bobBases[index]
+  );
+
+  const aliceUsableKey = binaryString
+    .split('')
+    .filter((_, index) => bases[index] === bobBases[index]);
+
+  // Select random subset for error checking (30% of the usable key)
+  const sampleSize = Math.max(1, Math.ceil(usableKey.length * 0.3));
+  const usableKeyIndices = Array.from(
+    { length: usableKey.length },
+    (_, i) => i
+  );
+  const sampledUsableIndices = usableKeyIndices
+    .slice()
+    .sort(() => Math.random() - 0.5)
+    .slice(0, sampleSize);
+
+  // Calculate errors in the sample
+  const errors = sampledUsableIndices.filter(
+    (i) => aliceUsableKey[i] !== usableKey[i]
+  ).length;
+  const errorRate = sampleSize > 0 ? (errors / sampleSize) * 100 : 0;
+  const hasEavesdropping = errorRate > 11;
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
@@ -513,6 +540,102 @@ export default function BB84Simulator() {
                       (_, index) => bases[index] === bobBases[index]
                     )}
                   />
+
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      variant="default"
+                      onClick={() => setErrorEstimation(true)}
+                    >
+                      Continue
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Error Estimation Card */}
+          {errorEstimation && (
+            <Card className="shadow-none mt-8">
+              <CardContent className="flex flex-col gap-5">
+                <CardTitle className="text-xl">Error Estimation</CardTitle>
+                <CardDescription>
+                  Before using the key, Alice and Bob need to check if anyone
+                  (like Eve) intercepted the transmission. They do this by
+                  comparing a random subset of their bits over a public channel.
+                </CardDescription>
+                <CardDescription>
+                  If the error rate is higher than 11%, it indicates potential
+                  eavesdropping. In real QKD systems, they would abort and start
+                  over. If the error rate is acceptable, they proceed to error
+                  correction.
+                </CardDescription>
+
+                <div className="border-t space-y-2 pt-4">
+                  <p className="text-sm font-medium">
+                    Sample size: {sampleSize} bits out of {usableKey.length}{' '}
+                    usable key bits (
+                    {usableKey.length > 0
+                      ? ((sampleSize / usableKey.length) * 100).toFixed(1)
+                      : 0}
+                    %)
+                  </p>
+
+                  <p className="text-sm font-medium">Alice's Usable Key:</p>
+                  <BinaryDisplay
+                    bits={aliceUsableKey}
+                    opacity={(index) => sampledUsableIndices.includes(index)}
+                  />
+
+                  <p className="text-sm font-medium">Bob's Usable Key:</p>
+                  <BinaryDisplay
+                    bits={usableKey}
+                    opacity={(index) => sampledUsableIndices.includes(index)}
+                  />
+
+                  {hasEavesdropping ? (
+                    <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg mt-4">
+                      <p className="text-sm text-red-800 dark:text-red-200 font-semibold">
+                        Eavesdropping Detected!
+                      </p>
+                      <div className="pt-4">
+                        <p className="text-sm">Errors detected: {errors}</p>
+                        <p className="text-sm">
+                          Error rate:{' '}
+                          <span
+                            className={
+                              hasEavesdropping
+                                ? 'text-red-600 dark:text-red-400 font-bold'
+                                : 'text-green-600 dark:text-green-400 font-bold'
+                            }
+                          >
+                            {errorRate.toFixed(2)}%
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg mt-4">
+                      <p className="text-sm text-green-800 dark:text-green-200 font-semibold">
+                        Channel Secure
+                      </p>
+                      <div className="pt-4">
+                        <p className="text-sm">Errors detected: {errors}</p>
+                        <p className="text-sm">
+                          Error rate:{' '}
+                          <span
+                            className={
+                              hasEavesdropping
+                                ? 'text-red-600 dark:text-red-400 font-bold'
+                                : 'text-green-600 dark:text-green-400 font-bold'
+                            }
+                          >
+                            {errorRate.toFixed(2)}%
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
