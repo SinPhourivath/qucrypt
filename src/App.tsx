@@ -63,7 +63,7 @@ export default function BB84Simulator() {
   const toggleBasis = (index: number) => {
     setBases((prev) => {
       const newBases = [...prev];
-      newBases[index] = newBases[index] === '+' ? '✕' : '+';
+      newBases[index] = newBases[index] === '+' ? 'x' : '+';
       return newBases;
     });
   };
@@ -72,7 +72,7 @@ export default function BB84Simulator() {
   const toggleEveBasis = (index: number) => {
     setEveBases((prev) => {
       const newBases = [...prev];
-      newBases[index] = newBases[index] === '+' ? '×' : '+';
+      newBases[index] = newBases[index] === '+' ? 'x' : '+';
       return newBases;
     });
   };
@@ -81,7 +81,7 @@ export default function BB84Simulator() {
   const toggleBobBasis = (index: number) => {
     setBobBases((prev) => {
       const newBases = [...prev];
-      newBases[index] = newBases[index] === '+' ? '✕' : '+';
+      newBases[index] = newBases[index] === '+' ? 'x' : '+';
       return newBases;
     });
   };
@@ -203,7 +203,7 @@ export default function BB84Simulator() {
                       setBases(
                         new Array(binaryString.length)
                           .fill(null)
-                          .map(() => (Math.random() > 0.5 ? '+' : '✕'))
+                          .map(() => (Math.random() > 0.5 ? '+' : 'x'))
                       );
                     }}
                     disabled={transmitted}
@@ -298,7 +298,7 @@ export default function BB84Simulator() {
                       setEveBases(
                         new Array(binaryString.length)
                           .fill(null)
-                          .map(() => (Math.random() > 0.5 ? '+' : '×'))
+                          .map(() => (Math.random() > 0.5 ? '+' : 'x'))
                       );
                     }}
                   >
@@ -424,7 +424,7 @@ export default function BB84Simulator() {
                       setBobBases(
                         new Array(binaryString.length)
                           .fill(null)
-                          .map(() => (Math.random() > 0.5 ? '+' : '✕'))
+                          .map(() => (Math.random() > 0.5 ? '+' : 'x'))
                       );
                     }}
                   >
