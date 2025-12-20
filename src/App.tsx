@@ -224,7 +224,7 @@ export default function BB84Simulator() {
                   </Button>
                 </div>
 
-                <div className="flex items-center gap-2 pt-4 border-t">
+                <div className="flex items-center gap-2">
                   <Checkbox
                     id="noise-toggle"
                     checked={noiseEnabled}
@@ -239,10 +239,11 @@ export default function BB84Simulator() {
                       setBobMeasurements([]);
                       setErrorEstimation(false);
                     }}
+                    disabled={binaryString.length < 128}
                   />
                   <Label
                     htmlFor="noise-toggle"
-                    className="text-sm cursor-pointer"
+                    className={`text-sm cursor-pointer ${binaryString.length < 128 ? 'opacity-50' : ''}`}
                   >
                     Enable Channel Noise
                   </Label>
@@ -251,7 +252,16 @@ export default function BB84Simulator() {
                   Channel noise simulates natural errors in the quantum channel
                   due to photon loss, detector inefficiency, or environmental
                   interference. This will introduce a small error rate (~5%)
+                  even without eavesdropping.
                 </CardDescription>
+                {binaryString.length < 128 && (
+                  <CardDescription className="text-amber-600 dark:text-amber-400">
+                    Note: Channel noise requires at least 128 bits (16
+                    characters) to be enabled. With shorter messages, the small
+                    sample size after basis sifting could cause normal noise to
+                    be misidentified as eavesdropping.
+                  </CardDescription>
+                )}
 
                 <div className="flex items-center gap-2">
                   <Checkbox
