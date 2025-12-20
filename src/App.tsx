@@ -11,11 +11,18 @@ import { Input } from '@/components/ui/input';
 import { ModeToggle } from './components/mode-toggle';
 import { ThemeProvider } from './components/theme-provider';
 import { Button } from './components/ui/button';
+import { Checkbox } from './components/ui/checkbox';
+import { Label } from './components/ui/label';
 
 export default function BB84Simulator() {
   const [inputText, setInputText] = useState('');
   const [bases, setBases] = useState<string[]>([]);
   const [transmitted, setTransmitted] = useState(false);
+  const [eveEnabled, setEveEnabled] = useState(false);
+  const [eveSentQubits, setEveSentQubits] = useState(false);
+  const [eveIntercepted, setEveIntercepted] = useState(false);
+  const [eveBases, setEveBases] = useState<string[]>([]);
+  const [eveMeasurements, setEveMeasurements] = useState<string[]>([]);
   const [aliceBasisVisible, setAliceBasisVisible] = useState(true);
   const [bobBases, setBobBases] = useState<string[]>([]);
   const [measured, setMeasured] = useState(false);
@@ -41,9 +48,12 @@ export default function BB84Simulator() {
     } else {
       setBases([]);
       setBobBases([]);
+      setEveBases([]);
     }
     setTransmitted(false);
     setAliceBasisVisible(true);
+    setEveIntercepted(false);
+    setEveSentQubits(false);
     setMeasured(false);
     setCompared(false);
     setResults(false);
@@ -54,6 +64,15 @@ export default function BB84Simulator() {
     setBases((prev) => {
       const newBases = [...prev];
       newBases[index] = newBases[index] === '+' ? '✕' : '+';
+      return newBases;
+    });
+  };
+
+  // Toggle Eve's basis
+  const toggleEveBasis = (index: number) => {
+    setEveBases((prev) => {
+      const newBases = [...prev];
+      newBases[index] = newBases[index] === '+' ? '×' : '+';
       return newBases;
     });
   };
@@ -201,12 +220,153 @@ export default function BB84Simulator() {
                     Transmit
                   </Button>
                 </div>
+
+                {/* Eve Toggle */}
+                {transmitted && !eveIntercepted && (
+                  <>
+                    <div className="flex items-center gap-2 pt-4 border-t">
+                      <Checkbox
+                        id="eve-toggle"
+                        checked={eveEnabled}
+                        onCheckedChange={(checked) =>
+                          setEveEnabled(checked as boolean)
+                        }
+                      />
+                      <Label
+                        htmlFor="eve-toggle"
+                        className="text-sm cursor-pointer"
+                      >
+                        Enable Eavesdropper (Eve)
+                      </Label>
+                    </div>
+                    <CardDescription>
+                      Eve is a malicious actor in this communication. She trys
+                      to look into the qubits to extract their information.
+                    </CardDescription>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Eve's Interception Card */}
+          {transmitted && eveEnabled && (
+            <Card className="shadow-none mt-8 border-red-200 dark:border-red-900">
+              <CardContent className="flex flex-col gap-5">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-xl text-red-600 dark:text-red-400">
+                    Eve's Interception
+                  </CardTitle>
+                </div>
+                <CardDescription>
+                  Eve intercepts the qubits in the quantum channel before they
+                  reach Bob. To extract the information from the qubits however,
+                  she need to guess the measurement bases.
+                </CardDescription>
+
+                <p className="text-sm font-medium">Eve's Measurement Bases:</p>
+                <div className="flex flex-wrap gap-1">
+                  {binaryString.split('').map((bit, index) => (
+                    <Button
+                      key={`eve-${index}-${bit}`}
+                      onClick={() => toggleEveBasis(index)}
+                      variant="outline"
+                      size="icon"
+                      className="w-10 h-10 bg-white shadow-none cursor-pointer"
+                    >
+                      {eveBases[index] === '+' ? (
+                        <Plus className="w-6 h-6" />
+                      ) : (
+                        <X className="w-6 h-6" />
+                      )}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setEveBases(
+                        new Array(binaryString.length)
+                          .fill(null)
+                          .map(() => (Math.random() > 0.5 ? '+' : '×'))
+                      );
+                    }}
+                  >
+                    Randomize Bases
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      // Eve measures the qubits
+                      const measurements = binaryString
+                        .split('')
+                        .map((bit, index) => {
+                          if (bases[index] === eveBases[index]) {
+                            // Eve's basis matches Alice's - correct measurement
+                            return bit;
+                          } else {
+                            // Eve's basis doesn't match - random result
+                            return Math.random() > 0.5 ? '1' : '0';
+                          }
+                        });
+                      setEveMeasurements(measurements);
+                      setEveIntercepted(true);
+                    }}
+                  >
+                    Intercept & Measure
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Eve's Measurement Results Card */}
+          {eveIntercepted && (
+            <Card className="shadow-none mt-8 border-red-200 dark:border-red-900">
+              <CardContent className="flex flex-col gap-5">
+                <CardTitle className="text-xl text-red-600 dark:text-red-400">
+                  Eve's Measurement Results
+                </CardTitle>
+                <CardDescription>
+                  Eve measured the qubits using her chosen bases. When her basis
+                  matched Alice's, she got the correct bit. When it didn't
+                  match, she got a random result (50/50 chance).
+                </CardDescription>
+                <CardDescription>
+                  After measuring, Eve must resend qubits to Bob (otherwise Bob
+                  would notice nothing arrived). She prepares new qubits based
+                  on her measurement results and her chosen bases. This
+                  introduces errors that will reveal her presence.
+                </CardDescription>
+
+                <div className="flex flex-wrap gap-1">
+                  {eveMeasurements.map((bit, index) => (
+                    <Badge
+                      key={`eve-result-${index}-${bit}`}
+                      variant="outline"
+                      className="w-10 h-10 flex text-lg rounded-md"
+                    >
+                      {bit}
+                    </Badge>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="destructive"
+                    onClick={() => setEveSentQubits(true)}
+                  >
+                    Send New Qubits to Bob
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
 
           {/* Bob's Basis Card */}
-          {transmitted && (
+          {transmitted && (!eveEnabled || eveSentQubits) && (
             <Card className="shadow-none mt-8">
               <CardContent className="flex flex-col gap-5">
                 <CardTitle className="text-xl">
@@ -219,6 +379,13 @@ export default function BB84Simulator() {
                   measures the bit. When bases don't match, he gets a random
                   result (50/50 chance).
                 </CardDescription>
+                {eveIntercepted && (
+                  <CardDescription className="text-red-600 dark:text-red-400">
+                    These qubits have been intercepted and measured by Eve! Bob
+                    is actually measuring the qubits that Eve prepared based on
+                    her measurements, not Alice's original qubits.
+                  </CardDescription>
+                )}
                 <CardDescription>
                   But… we don't have anyone else to role-play as Bob. You can
                   ask a friend to do it, or… pretend you are Bob and try to
@@ -260,8 +427,16 @@ export default function BB84Simulator() {
                       const measurements = binaryString
                         .split('')
                         .map((bit, index) => {
-                          if (bases[index] === bobBases[index]) {
-                            return bit;
+                          // if Eve intercepted, Bob measures Eve's qubits
+                          const sourceData = eveIntercepted
+                            ? eveMeasurements[index]
+                            : bit;
+                          const sourceBasis = eveIntercepted
+                            ? eveBases[index]
+                            : bases[index];
+
+                          if (sourceBasis === bobBases[index]) {
+                            return sourceData;
                           } else {
                             return Math.random() > 0.5 ? '1' : '0';
                           }
@@ -452,13 +627,6 @@ export default function BB84Simulator() {
               </CardContent>
             </Card>
           )}
-
-          {/* Additional Explanation */}
-          <div className="mt-8">
-            <div className="flex justify-between items-start">
-              <p>Notable confusing concepts:</p>
-            </div>
-          </div>
         </div>
       </div>
     </ThemeProvider>
