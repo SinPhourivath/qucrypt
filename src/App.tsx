@@ -10,6 +10,7 @@ import { BasisSelector } from './components/basis-selector';
 import { BinaryDisplay } from './components/binary-display';
 import { ModeToggle } from './components/mode-toggle';
 import { ThemeProvider } from './components/theme-provider';
+import { Badge } from './components/ui/badge';
 import { Button } from './components/ui/button';
 import { Checkbox } from './components/ui/checkbox';
 import { Label } from './components/ui/label';
@@ -155,7 +156,7 @@ export default function BB84Simulator() {
       }>;
     }> = [];
 
-    let currentBobKey = [...usableKey];
+    const currentBobKey = [...usableKey];
     const aliceKey = [...aliceUsableKey];
     const keyLength = currentBobKey.length;
 
@@ -168,7 +169,7 @@ export default function BB84Simulator() {
     ];
 
     for (let round = 0; round < 4; round++) {
-      let blockSize = Math.max(4, Math.min(blockSizes[round], keyLength));
+      const blockSize = Math.max(4, Math.min(blockSizes[round], keyLength));
       let errorsFound = 0;
       let blocksChecked = 0;
       const blockInfo: Array<{
@@ -192,11 +193,13 @@ export default function BB84Simulator() {
 
         // Calculate parities
         const aliceParity =
-          blockIndices.reduce((sum, idx) => sum + parseInt(aliceKey[idx]), 0) %
-          2;
+          blockIndices.reduce(
+            (sum, idx) => sum + parseInt(aliceKey[idx], 10),
+            0
+          ) % 2;
         const bobParity =
           blockIndices.reduce(
-            (sum, idx) => sum + parseInt(currentBobKey[idx]),
+            (sum, idx) => sum + parseInt(currentBobKey[idx], 10),
             0
           ) % 2;
 
@@ -214,12 +217,12 @@ export default function BB84Simulator() {
 
             const aliceLeftParity =
               leftIndices.reduce(
-                (sum, idx) => sum + parseInt(aliceKey[idx]),
+                (sum, idx) => sum + parseInt(aliceKey[idx], 10),
                 0
               ) % 2;
             const bobLeftParity =
               leftIndices.reduce(
-                (sum, idx) => sum + parseInt(currentBobKey[idx]),
+                (sum, idx) => sum + parseInt(currentBobKey[idx], 10),
                 0
               ) % 2;
 
@@ -596,7 +599,7 @@ export default function BB84Simulator() {
                             ? eveBases[index]
                             : bases[index];
 
-                          let measuredBit;
+                          let measuredBit: string;
                           if (sourceBasis === bobBases[index]) {
                             measuredBit = sourceData;
                           } else {
@@ -869,70 +872,89 @@ export default function BB84Simulator() {
                 </CardDescription>
 
                 <div className="space-y-6">
-                  {cascadeRounds.map((round, roundIdx) => (
+                  {cascadeRounds.map((round, roundIndex) => (
                     <div
-                      key={roundIdx}
+                      key={`${roundIndex}-${round}`}
                       className="border rounded-lg p-4 space-y-3"
                     >
                       <p className="font-semibold">Round {round.round}</p>
                       <div className="grid grid-cols-3 gap-2 text-sm">
                         <p>
-                          <span className="text-muted-foreground">
-                            Block size:
-                          </span>{' '}
-                          {round.blockSize} bits
+                          <span>Blocks:</span> {round.blocksChecked}
                         </p>
                         <p>
-                          <span className="text-muted-foreground">Blocks:</span>{' '}
-                          {round.blocksChecked}
+                          <span>Block size:</span> {round.blockSize} bits
                         </p>
                         <p>
-                          <span className="text-muted-foreground">
-                            Errors found:
-                          </span>{' '}
-                          {round.errorsFound}
+                          <span>Errors found:</span> {round.errorsFound}
                         </p>
                       </div>
 
                       <div className="space-y-3 mt-4">
-                        {round.blocks.map((block, blockIdx) => {
+                        {round.blocks.map((block, blockIndex) => {
                           const bobKey =
-                            roundIdx === 0
+                            roundIndex === 0
                               ? usableKey
-                              : cascadeRounds[roundIdx - 1].correctedKey;
+                              : cascadeRounds[roundIndex - 1].correctedKey;
                           const blockBits = block.indices.map(
                             (idx) => bobKey[idx]
+                          );
+                          const aliceBlockBits = block.indices.map(
+                            (idx) => aliceUsableKey[idx]
                           );
 
                           return (
                             <div
-                              key={blockIdx}
-                              className="p-3 rounded border bg-muted/30"
+                              key={`${blockIndex}-${block}`}
+                              className="p-3 rounded-md border bg-muted/30"
                             >
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="text-xs font-medium">
-                                  Block {blockIdx + 1}
-                                </p>
-                                <div className="flex gap-4 text-xs">
-                                  <span>Alice: {block.aliceParity}</span>
-                                  <span>Bob: {block.bobParity}</span>
-                                  {block.hasError ? 'Mismatch' : 'Match'}
+                              <p className="text-sm font-semibold mb-3">
+                                Block {blockIndex + 1}
+                              </p>
+
+                              <div className="grid grid-cols-2 gap-6">
+                                {/* Alice's side */}
+                                <div>
+                                  <p className="text-xs mb-2">
+                                    Alice parity: {block.aliceParity}
+                                  </p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {aliceBlockBits.map((bit, index) => (
+                                      <Badge
+                                        key={`${index}-${bit}`}
+                                        variant="outline"
+                                        className="w-10 h-10 flex text-lg rounded-md"
+                                      >
+                                        {bit}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Bob's side */}
+                                <div>
+                                  <p className="text-xs mb-2">
+                                    Bob parity: {block.bobParity}
+                                  </p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {blockBits.map((bit, index) => (
+                                      <Badge
+                                        key={`${index}-${bit}`}
+                                        variant="outline"
+                                        className={`w-10 h-10 flex text-lg rounded-md ${
+                                          block.errorIndex ===
+                                          block.indices[index]
+                                            ? 'bg-primary text-primary-foreground font-bold border-primary'
+                                            : ''
+                                        }`}
+                                      >
+                                        {bit}
+                                      </Badge>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex flex-wrap gap-1">
-                                {blockBits.map((bit, bitIdx) => (
-                                  <span
-                                    key={bitIdx}
-                                    className={`inline-flex items-center justify-center w-6 h-6 text-xs font-mono rounded border ${
-                                      block.errorIndex === block.indices[bitIdx]
-                                        ? 'bg-primary text-primary-foreground font-bold border-primary'
-                                        : 'bg-background'
-                                    }`}
-                                  >
-                                    {bit}
-                                  </span>
-                                ))}
-                              </div>
+
                               {block.hasError &&
                                 block.errorIndex !== undefined && (
                                   <p className="text-xs text-muted-foreground mt-2">
