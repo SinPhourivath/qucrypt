@@ -67,7 +67,6 @@ export default function BB84Simulator() {
     } else {
       setBases([]);
       setBobBases([]);
-      setEveBases([]);
     }
     setTransmitted(false);
     setAliceBasisVisible(true);
@@ -77,6 +76,7 @@ export default function BB84Simulator() {
     setCompared(false);
     setResults(false);
     setErrorEstimation(false);
+    setErrorCorrection(false);
   }, [binaryString]);
 
   // Toggle basis for a specific bit
@@ -118,22 +118,25 @@ export default function BB84Simulator() {
     .split('')
     .filter((_, index) => bases[index] === bobBases[index]);
 
-  // Select random subset for error checking (30% of the usable key)
-  const sampleSize = Math.max(1, Math.ceil(usableKey.length * 0.3));
+  // Select random subset for error checking (50% of the usable key)
+  const sampleSize = Math.max(1, Math.ceil(usableKey.length * 0.5));
+
   const usableKeyIndices = Array.from(
     { length: usableKey.length },
     (_, i) => i
   );
+
   const sampledUsableIndices = usableKeyIndices
     .slice()
     .sort(() => Math.random() - 0.5)
     .slice(0, sampleSize);
 
-  // Calculate errors in the sample
   const errors = sampledUsableIndices.filter(
     (i) => aliceUsableKey[i] !== usableKey[i]
   ).length;
+
   const errorRate = sampleSize > 0 ? (errors / sampleSize) * 100 : 0;
+
   const hasEavesdropping = errorRate > 11;
 
   const runCascadeProtocol = () => {
@@ -156,7 +159,7 @@ export default function BB84Simulator() {
     const aliceKey = [...aliceUsableKey];
     const keyLength = currentBobKey.length;
 
-    // Cascade protocol: 4 rounds with increasing block sizes
+    // 4 rounds with increasing block sizes
     const blockSizes = [
       Math.ceil((0.73 / (errorRate || 1)) * 100), // adaptive to error rate
       Math.ceil(keyLength / 8),
@@ -368,13 +371,18 @@ export default function BB84Simulator() {
                     onCheckedChange={(checked) => {
                       setNoiseEnabled(checked as boolean);
 
+                      // Reset Eve's state
+                      setEveIntercepted(false);
+                      setEveSentQubits(false);
+                      setEveMeasurements([]);
+
                       // Reset Bob's state when toggling noise
-                      setBobBases(new Array(binaryString.length).fill('+'));
                       setMeasured(false);
                       setCompared(false);
                       setResults(false);
                       setBobMeasurements([]);
                       setErrorEstimation(false);
+                      setErrorCorrection(false);
                     }}
                     disabled={binaryString.length < 128}
                   />
@@ -411,6 +419,8 @@ export default function BB84Simulator() {
                       setEveBases(
                         checked ? new Array(binaryString.length).fill('+') : []
                       );
+
+                      // Reset Eve's state
                       setEveIntercepted(false);
                       setEveSentQubits(false);
                       setEveMeasurements([]);
@@ -421,6 +431,8 @@ export default function BB84Simulator() {
                       setCompared(false);
                       setResults(false);
                       setBobMeasurements([]);
+                      setErrorEstimation(false);
+                      setErrorCorrection(false);
                     }}
                   />
                   <Label
@@ -727,14 +739,16 @@ export default function BB84Simulator() {
                     )}
                   />
 
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="default"
-                      onClick={() => setErrorEstimation(true)}
-                    >
-                      Continue
-                    </Button>
-                  </div>
+                  {(noiseEnabled || eveEnabled) && (
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="default"
+                        onClick={() => setErrorEstimation(true)}
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -827,7 +841,6 @@ export default function BB84Simulator() {
                           variant="default"
                           onClick={() => {
                             setErrorCorrection(true);
-                            // Run Cascade protocol
                             runCascadeProtocol();
                           }}
                         >
