@@ -80,6 +80,34 @@ export default function BB84Simulator() {
     setErrorCorrection(false);
   }, [binaryString]);
 
+  // Auto-scroll to bottom when new cards appear
+  useEffect(() => {
+    if (
+      transmitted ||
+      eveIntercepted ||
+      eveSentQubits ||
+      measured ||
+      compared ||
+      results ||
+      errorEstimation ||
+      errorCorrection
+    ) {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [
+    transmitted,
+    eveIntercepted,
+    eveSentQubits,
+    measured,
+    compared,
+    results,
+    errorEstimation,
+    errorCorrection
+  ]);
+
   // Toggle basis for a specific bit
   const toggleBasis = (index: number) => {
     setBases((prev) => {
@@ -282,20 +310,20 @@ export default function BB84Simulator() {
             </div>
           </div>
 
-          {/* Alice's Message Card */}
+          {/* Alice's Key Card */}
           <Card className="shadow-none mb-8">
             <CardContent className="flex flex-col gap-5">
               <CardTitle className="text-xl">Alice's Secret Key</CardTitle>
               <CardDescription>
-                Pretend that you are Alice and you want to send a secret message
-                to Bob. First, you write your message which will be converted
+                Pretend that you are Alice and you want to send a secret key
+                to Bob. First, you write your key which will be converted
                 into bits (0s and 1s) for quantum operations.
               </CardDescription>
 
               <Input
                 id="text-input"
                 type="text"
-                placeholder="Type your message here..."
+                placeholder="Type your key here..."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
               />
@@ -323,7 +351,7 @@ export default function BB84Simulator() {
                 <CardDescription>
                   Now you (Alice) choose a random basses for each bit: +
                   (rectilinear) or x (diagonal). This is like choosing a secret
-                  encoding for your message. You can select bases manually or
+                  encoding for your key. You can select bases manually or
                   randomize them. Once ready, click "Transmit" to send the
                   qubits to Bob through the quantum channel.
                 </CardDescription>
@@ -405,7 +433,7 @@ export default function BB84Simulator() {
                 {binaryString.length < 128 && (
                   <CardDescription className="text-amber-600 dark:text-amber-400">
                     Note: Channel noise requires at least 128 bits (16
-                    characters) to be enabled. With shorter messages, the small
+                    characters) to be enabled. With shorter key, the small
                     sample size after basis sifting could cause normal noise to
                     be misidentified as eavesdropping.
                   </CardDescription>
