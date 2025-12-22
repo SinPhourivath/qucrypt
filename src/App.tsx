@@ -65,8 +65,12 @@ export default function BB84Simulator() {
     if (binaryString) {
       setBases(new Array(binaryString.length).fill('+'));
       setBobBases(new Array(binaryString.length).fill('+'));
+      if (eveEnabled) {
+        setEveBases(new Array(binaryString.length).fill('+'));
+      }
     } else {
       setBases([]);
+      setEveBases([]);
       setBobBases([]);
     }
     setTransmitted(false);
@@ -315,9 +319,9 @@ export default function BB84Simulator() {
             <CardContent className="flex flex-col gap-5">
               <CardTitle className="text-xl">Alice's Secret Key</CardTitle>
               <CardDescription>
-                Pretend that you are Alice and you want to send a secret key
-                to Bob. First, you write your key which will be converted
-                into bits (0s and 1s) for quantum operations.
+                Pretend that you are Alice and you want to send a secret key to
+                Bob. First, you write your key which will be converted into bits
+                (0s and 1s) for quantum operations.
               </CardDescription>
 
               <Input
